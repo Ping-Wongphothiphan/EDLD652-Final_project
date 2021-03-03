@@ -4,28 +4,79 @@
 library(tidyverse)
 library(gghighlight)
 library(here)
+library(rio)
 ```
 
 ```{r}
 data <- read.csv(here("data.csv"))
+
+data <- data %>% 
+  mutate(GenConBlf = ï..GenConBlf) # I think this should fix your concern below about the variable name!
+
+# But I noticed you also have this .sav file in the repo, so I'm curious to check that out as an alternative to the .csv.
+
+datasav <- import(here("final_data.sav"))
+
+# just checking to see if these two data sets are the same
+
+data %>% 
+  colnames()
+
+datasav %>% 
+  colnames()
+
+data %>% 
+  select(VacConBlf) %>% 
+  head()
+
+datasav %>% 
+  select(VacConBlf) %>% 
+  head()
+
+data$VacConBlf
+datasav$VacConBlf
+
+# based on all of this it looks to be so
+
+data$VacConBlf == datasav$VacConBlf # i don't know why this is coming up with F's when visual inspection looks like they're identical... i'm going to assume they're the same...?
+
+# This df doesn't seem to have any variable name abnormalities, which is nice, but the main reason I like to use a .sav file over a .csv file is because it retains "attributes" about the variables, which can be really useful for things like knowing the exact question and sometimes for the names of factor levels, etc. But in this case it doesn't really matter which you use! Just thought I'd bring it up, though.
+
 ```
 
 # Create Plot 1: DV is Intention to vaccinate their fictional children.
-# P.S. I cannot rename one of my variables: from "ï..GenConBlf" into "GenConBlf". If you could, please let me know.
+# P.S. I cannot rename one of my variables: from "ï..GenConBlf" into "GenConBlf". If you could, please let me know. 
 
 ```{r}
-data %>% ggplot(aes(ï..GenConBlf, VacIntMMR))+
-  geom_point(aes(color = Condition), alpha = .3)+
+data %>% ggplot(aes(GenConBlf, VacIntMMR))+
+  geom_point(aes(color = Condition), alpha = .3, position = "jitter")+ # jitter is totally optional here; I thought it was interesting to try out b/c it appeared a lot of the dots were overlapping each other and mixing colors, making it difficult to see the true density of the colors across the plot. i think you can also adjust the level of jittering to something lower if this feels a little misleading.
   geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
-  labs(title = "Do parents with conspiracy belief intent to vaccinate their child?",
+  labs(title = "Do parents with conspiracy beliefs intend to vaccinate their child?", # small edit here to wording
        subtitle = "An experiment of different message types",
        x = "MMR vaccination intention",
        y = "Level of general conspiracy belief")+
-  scale_color_manual(values = c("orchid", "salmon", "darkturquoise", "chartreuse3"),
+  scale_color_manual(values = c("orchid", "salmon", "darkturquoise", "chartreuse3"), # are these colorblind accessible?
                      name = "Message Type", 
                      breaks =  c("Control", "Fact", "Narrative", "Hybrid"),
                      labels = c("No exposure", "Scientific Fact", "Narrative", "Hybrid"))+
-  theme_minimal()
+  theme_minimal()+
+  # it looks like both your x and y variables might be from Likert scale items, so the numbers are only as meaningful as the word anchors behind them. it might be helpful for your audience to have the axes labelled with the actual response options
+  scale_y_continuous(labels = c("none", "a little", "a medium amount", "kinda a lot", "really a lot"), # i made these up but you could fill this in with what they actually are
+                     breaks = 1:5, limits = c(1,5))+
+  scale_x_continuous(labels = c("definitely won't", "probably won't", "unsure", "probably will", "definitely will"),
+                     breaks = 1:5, limits = c(1,5))
+
+# or you could do it like this if you don't want as many words
+
+  # scale_y_continuous(labels = c("none", "2", "3", "4", "really a lot"),
+  #                    breaks = 1:5, limits = c(1,5))+
+
+# or like this if you want something in between
+
+  # scale_x_continuous(labels = c("definitely won't", "2", "unsure", "4", "definitely will"),
+  #                    breaks = 1:5, limits = c(1,5))
+
+# could also be useful to add confidence bands here
   
 ```
 
@@ -33,7 +84,7 @@ data %>% ggplot(aes(ï..GenConBlf, VacIntMMR))+
 #This graph is for Control Condition.
 ```{r}
 data %>% 
-  ggplot(aes(ï..GenConBlf, VacIntMMR))+
+  ggplot(aes(GenConBlf, VacIntMMR))+
   geom_point(color = "grey80")+
   geom_point(data = filter(data, Condition == "Control"), color = "orchid")+
   geom_smooth(data = subset(data, Condition == "Control"), method = "lm", color = "orchid", se = FALSE)+
@@ -47,7 +98,7 @@ data %>%
 # This graph is for Fact Condition
 ```{r}
 data %>% 
-  ggplot(aes(ï..GenConBlf, VacIntMMR))+
+  ggplot(aes(GenConBlf, VacIntMMR))+
   geom_point(color = "grey80")+
   geom_point(data = filter(data, Condition == "Fact"), color = "salmon")+
   geom_smooth(data = subset(data, Condition == "Fact"), method = "lm", color = "salmon", se = FALSE)+
@@ -61,7 +112,7 @@ data %>%
 #This graph is for Narrative Condition
 ```{r}
 data %>% 
-  ggplot(aes(ï..GenConBlf, VacIntMMR))+
+  ggplot(aes(GenConBlf, VacIntMMR))+
   geom_point(color = "grey80")+
   geom_point(data = filter(data, Condition == "Narrative"), color = "darkturquoise")+
   geom_smooth(data = subset(data, Condition == "Narrative"), method = "lm", color = "darkturquoise", se = FALSE)+
@@ -75,7 +126,7 @@ data %>%
 # This graph is for Hybrid Condition
 ```{r}
 data %>% 
-  ggplot(aes(ï..GenConBlf, VacIntMMR))+
+  ggplot(aes(GenConBlf, VacIntMMR))+
   geom_point(color = "grey80")+
   geom_point(data = filter(data, Condition == "Hybrid"), color = "chartreuse3")+
   geom_smooth(data = subset(data, Condition == "Hybrid"), method = "lm", color = "chartreuse3", se = FALSE)+
@@ -91,58 +142,141 @@ data %>%
 #Create Plot 2: This graph shows means of General Conspiracy Belief of each age group according to their self-identify political ideology.
 
 ```{r}
-data <- data %>% group_by(SlfPolIdeo, age) %>% 
-  mutate(avg_GenCon = mean(ï..GenConBlf, na.rm = TRUE)) %>% 
+data <- data %>% 
+  group_by(SlfPolIdeo, age) %>% 
+  mutate(avg_GenCon = mean(GenConBlf, na.rm = TRUE)) %>% 
   ungroup()
+
+# i'm looking at plot 2 and wondering where the 18-20 year old democrats are
+
+data %>% 
+  dplyr::group_by(SlfPolIdeo, age) %>% 
+  dplyr::summarise(n = n())
+
+# is it the top row in this data wherein ideology and age are blank? i'm looking at the data set now and I don't think so? it looks like there's a chunk of people who completed anywhere from 50-90% of the survey and skipped all the demographics and possibly other questions as well. i would consider filtering out those people at the beginning of the document right after importing the data. 
+
+# this would do it: 
+
+datacomp <- data %>% 
+  filter(Progress > 90)
+
+# but that doesn't really solve the mystery of the missing democrats. i guess it seems that there just are none in your sample. that's funny!
+
+data %>% 
+  dplyr::group_by(age) %>% 
+  dplyr::summarise(n = n())
+
+# given how few people there are in the 18-20 year old category, i would consider just excluding that age group from the plot (and possibly also the 51-60 year olds), since the group sizes are really just too small to get meaningful averages from
+
+
+
 ```
 
 
 ```{r}
-data %>% filter(age != " ") %>% 
+data %>% 
+  filter(age != " ") %>% 
   filter(SlfPolIdeo != "Other:") %>% 
   ggplot(aes(age, avg_GenCon))+
   geom_col(aes(fill = SlfPolIdeo), position = "dodge")+
-  labs(title = "Conspiracy belief in general of participants across age and political party",
+  labs(title = "General conspiracy belief across age and political party",
        x = "Age groups",
-       y = "Average conspiracy belief in general")+
+       y = "Average general conspiracy belief")+
   scale_fill_manual(values = c("blue1", "darkmagenta", "firebrick2"),
                      name = "Self-identified \npolitical party", 
                      breaks =  c("Democrats", "Independents", "Republicans"),
                      labels = c("Democrats", "Independents", "Republicans"))+
   theme_minimal()
+
+# i'd create a little summary dataframe to use for my plot and in the process i can cleanly filter for desired age and ideology
+
+plot2 <- datacomp %>% 
+  filter(age == "21-30 years old" | age == "31-40 years old" | age == "41-50 years old") %>% 
+  filter(SlfPolIdeo != "Other:") %>% 
+  dplyr::group_by(SlfPolIdeo, age) %>% 
+  dplyr::summarise(avg_GenCon = mean(GenConBlf, na.rm = T))
+
+plot2 %>% 
+  ggplot(aes(age, avg_GenCon))+
+  geom_col(aes(fill = SlfPolIdeo), position = "dodge")+
+  labs(title = "General conspiracy beliefs across age and political party",
+       x = "Age",
+       y = "Average general conspiracy belief")+
+  scale_fill_manual(values = c("blue1", "darkmagenta", "firebrick2"),# I like that these are color coded in a meaningful way for the topic! I know Daniel mentioned there's a way to double check that your colors you're using a colorblind accessible. might be worth taking a look at just to be sure
+                     name = "Self-identified \npolitical party", 
+                     breaks =  c("Democrats", "Independents", "Republicans"),
+                     labels = c("Democrats", "Independents", "Republicans"))+
+  theme_minimal()+
+  scale_y_continuous(limits = c(0,5)) + # would extend scale to include whole range of response options since it's just 1-5. i wonder also consider relabelling y axis to use the response options like i did in plot 1
+  theme(legend.position = "top") # or if you wanted you could stick it on the bottom or really wherever you like
+
+# i also think it could be useful to have error bars here
+
 ```
 
 #Plot 3: I might want to create an animation showing that, compared to conspiracy beliefs in general, conspiracy belief likely higher among the same group of population.
 
 ```{r}
-data$PolIdeo <- data$PolIdeo %>% factor(c("Very conservative", "Conservative", "Neither liberal nor conservative", "Liberal", "Very liberal"))
+data$PolIdeo <- data$PolIdeo %>% 
+  factor(c("Very conservative", "Conservative", "Neither liberal nor conservative", "Liberal", "Very liberal"))
 data$Edu <- data$Edu %>% 
   factor(c(levels = "High school degree or equivalent (e.g. GED)", "Some college, no degree", "Associate degree (e.g. AA, AS)", "Bachelor's degree (e.g. BA, BS)", "Master's degree (e.g., MA, MS, MEd)"))
 ```
 
 ```{r}
-data$Edu <- recode_factor(data$Edu, "High school degree or equivalent (e.g. GED)" = "High school degree", "Some college, no degree" = "Some College, no degree", "Associate degree (e.g. AA, AS)" = "Associate's degree", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's degree", "Master's degree (e.g., MA, MS, MEd)" = "Master's degree")
+data$Edu <- recode_factor(data$Edu, "High school degree or equivalent (e.g. GED)" = "High school degree", "Some college, no degree" = "Some college, no degree", "Associate degree (e.g. AA, AS)" = "Associate's degree", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's degree", "Master's degree (e.g., MA, MS, MEd)" = "Master's degree")
 ```
 
 ```{r}
-data %>% filter(Edu != "NA") %>%  
+data %>% 
+  filter(Edu != "NA") %>%  
   ggplot(aes(x = PolIdeo, y = Edu))+
-  geom_tile(aes(fill = ï..GenConBlf), color = "white")+
-  scale_fill_viridis_c(option = "magma")+
-  labs(title = "Conspiracy belief in general of participants across political ideology and education",
+  geom_tile(aes(fill = GenConBlf), color = "white")+
+  scale_fill_viridis_c(option = "magma")+ # this color palette looks really nice!
+  labs(title = "General conspiracy beliefs across political ideology and education",
        x = "Political ideology",
        y = "Degree of education",
        fill = "General\nconspiracy\nbelief level")+
   theme_minimal()+
   theme(plot.title = element_text(hjust = 0.65),
     axis.text.x = element_text(angle = 25, hjust = 1))
+
+# i'd again make a little summary df for the plot and then also you can use that to facet wrap
+
+plot3 <- data %>% 
+  select(PolIdeo, Edu, GenConBlf, VacConBlf) %>% 
+  na.omit() %>% 
+  pivot_longer(GenConBlf:VacConBlf, names_to = "Domain", values_to = "Beliefs") 
+
+plot3 <- plot3 %>% 
+  mutate(Domain = plyr::revalue(as.factor(Domain),
+                                c("GenConBlf" = "General Conspiracy Beliefs", # make that look prettier for plot
+                                  "VacConBlf" = "Vaccine Conspiracy Beliefs")))
+
+# and now we can facet wrap to have both of your plots merged into 1
+
+plot3 %>% 
+  ggplot(aes(x = PolIdeo, y = Edu)) +
+  geom_tile(aes(fill = Beliefs), color = "white") +
+  scale_fill_viridis_c(option = "magma") +
+  facet_wrap(~Domain) +
+  theme(legend.position = "top",
+        plot.title = element_text(hjust = 0.60),
+        axis.text.x = element_text(angle = 25, hjust = 1),
+        plot.title.position = "plot") +
+  labs(title = "Vaccination conspiracy beliefs across education and political ideology",
+       x = "Political ideology",
+       y = NULL, # just to give you extra space since how you've labelled it makes it nicely self-explanatory in my opinion
+       fill = "Vaccination conspiracy belief level")
 ```
+
 ```{r}
-data %>% filter(Edu != "NA") %>%  
+data %>% 
+  filter(Edu != "NA") %>%  
   ggplot(aes(x = PolIdeo, y = Edu))+
   geom_tile(aes(fill = VacConBlf), color = "white")+
   scale_fill_viridis_c(option = "magma")+
-  labs(title = "Conspiracy belief in vaccination of participants across political ideology and education",
+  labs(title = "Vaccination conspiracy beliefs across political ideology and education",
        x = "Political ideology",
        y = "Degree of education",
        fill = "Vaccination\nconspiracy\nbelief level")+
@@ -153,18 +287,24 @@ data %>% filter(Edu != "NA") %>%
 
 #Plot 4:
 ```{r}
-data %>% filter(Gender == c("Female", "Male")) %>% 
-  ggplot(aes(ï..GenConBlf)) +
+data %>% 
+  filter(Gender == c("Female", "Male")) %>% 
+  ggplot(aes(GenConBlf)) +
   geom_density(aes(fill = Gender), color = "white", alpha = .3)+
   labs(title = "Males vs Females: Who has higher general conspiracy belief?",
        x = "Level of general conspiracy belief",
        y = "Density")+
   theme_minimal()+
   theme(plot.title = element_text(hjust = 0.5))
+
+# most of my suggested edits here are things i've mentioned in previous plots. i would consider doing something similar here to plot 3 where you facet wrap and also labelling the x axis to have more meaningful labels in some way by incorporating text. i would also check to make sure these colors are colorblind accessible.
+
+# my overall impression i get based on these plots is that these distributions roughly look pretty similar even though they of course aren't exactly identical. it might be fun to add vertical lines for the mean, median, and modes for males and females. what these plots make me really want to know is whether these potential differences in means are significant. that might be useful information to include in the text that accompanies the figures in your final product.
 ```
 
 ```{r}
-data %>% filter(Gender == c("Female", "Male")) %>% 
+data %>% 
+  filter(Gender == c("Female", "Male")) %>% 
   ggplot(aes(VacConBlf)) +
   geom_density(aes(fill = Gender), color = "white", alpha = .3)+
   labs(title = "Males vs Females: Who has higher vaccination conspiracy belief?",
