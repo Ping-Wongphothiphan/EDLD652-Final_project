@@ -4,23 +4,28 @@
 library(tidyverse)
 library(gghighlight)
 library(here)
+library(gganimate)
 ```
 
 ```{r}
-data <- read.csv(here("data.csv"))
+data <- read_csv(here("data.csv"))
 ```
 
 # Create Plot 1: DV is Intention to vaccinate their fictional children.
 # P.S. I cannot rename one of my variables: from "ï..GenConBlf" into "GenConBlf". If you could, please let me know.
 
 ```{r}
-data %>% ggplot(aes(ï..GenConBlf, VacIntMMR))+
-  geom_point(aes(color = Condition), alpha = .3)+
+data %>% ggplot(aes(GenConBlf, VacIntMMR))+
+  geom_point(aes(color = Condition), alpha = .3, position = "jitter")+
   geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
-  labs(title = "Do parents with conspiracy belief intent to vaccinate their child?",
+  labs(title = "Do parents with conspiracy beliefs intend to vaccinate their child?",
        subtitle = "An experiment of different message types",
        x = "MMR vaccination intention",
        y = "Level of general conspiracy belief")+
+  scale_x_continuous(labels = c("Definitely won't", "Probably won't", "Unsure", "Probably will", "Definitely will"), 
+                     breaks = 1:5, limits = c(1,5))+
+  scale_y_continuous(labels = c("None", " ", "Moderate", " ", "A lot"),
+                     breaks = 1:5, limits = c(1,5))+
   scale_color_manual(values = c("orchid", "salmon", "darkturquoise", "chartreuse3"),
                      name = "Message Type", 
                      breaks =  c("Control", "Fact", "Narrative", "Hybrid"),

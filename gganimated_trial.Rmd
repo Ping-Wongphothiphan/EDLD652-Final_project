@@ -1,0 +1,11 @@
+```{r}
+plot1.anim<- ggplot(data, aes(GenConBlf, VacIntMMR)) +
+  geom_point(aes(color = Condition), position = "jitter")+
+  #geom_smooth(aes(color = Condition))+
+  transition_states(Condition,
+                    transition_length = 2,
+                    state_length = 2)
+
+anim_save("plot1_anim.gif", plot1.anim)
+```
+
