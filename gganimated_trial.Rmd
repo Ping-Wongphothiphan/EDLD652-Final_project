@@ -1,11 +1,38 @@
-```{r}
-plot1.anim<- ggplot(data, aes(GenConBlf, VacIntMMR)) +
-  geom_point(aes(color = Condition), position = "jitter")+
-  #geom_smooth(aes(color = Condition))+
-  transition_states(Condition,
-                    transition_length = 2,
-                    state_length = 2)
 
-anim_save("plot1_anim.gif", plot1.anim)
+
+```{r}
+ggplot(data, aes(x = GenConBlf, y =VacIntMMR))+
+  geom_point(aes(color = Condition), alpha = .7, position = "jitter")+
+  #geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
+  labs(x = "MMR vaccination intention",
+       y = "Level of general conspiracy belief")+
+  scale_x_continuous(labels = c("Definitely won't", "Probably won't", "Middle of the road", "Probably will", "Definitely will"), 
+                     breaks = 1:5, limits = c(1,5))+
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 25, hjust = 1))+
+  scale_y_continuous(labels = c("None", " ", "Moderate", " ", "A lot"),
+                     breaks = 1:5, limits = c(1,5))+
+  transition_states(data$Condition,
+                    transition_length = 1,
+                    state_length = 1)+
+  ggtitle("Do parents with Conspiracy beliefs intend to vaccinate their children against Measles?",
+          subtitle = "Intention after reading {Condition} message format")+
+  theme_minimal()
+
+
+animate(plot1.animate, renderer = magick_renderer())
+```
+
+
+```{r}
+data %>% filter(Gender == c("Female", "Male")) %>% 
+  ggplot(aes(GenConBlf)) +
+  geom_density(aes(fill = Gender), color = "white", alpha = .3)+
+  labs(title = "Males vs Females: Who has higher general conspiracy belief?",
+       x = "Level of general conspiracy belief",
+       y = "Density")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
 ```
 
