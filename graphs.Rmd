@@ -17,14 +17,15 @@ data <- read_csv(here("data.csv"))
 # P.S. I cannot rename one of my variables: from "ï..GenConBlf" into "GenConBlf". If you could, please let me know.
 
 ```{r}
-plot1<-data %>% ggplot(aes(GenConBlf, VacIntMMR))+
-  geom_point(aes(color = Condition), alpha = .3, position = "jitter")+
-  #geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
+data %>% ggplot(aes(GenConBlf, VacIntMMR))+
+  geom_point(aes(color = Condition), alpha = .7, position = "jitter")+
+  geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
   labs(title = "Do parents with conspiracy beliefs intend to vaccinate their child?",
        subtitle = "An experiment of different message types",
        x = "MMR vaccination intention",
        y = "Level of general conspiracy belief")+
-  scale_x_continuous(labels = c("Definitely won't", "Probably won't", "Unsure", "Probably will", "Definitely will"), 
+  theme(plot.title = element_text(hjust = .7))+
+  scale_x_continuous(labels = c("Definitely won't", " ", "Maybe, Maybe not", " ", "Definitely will"), 
                      breaks = 1:5, limits = c(1,5))+
   scale_y_continuous(labels = c("None", " ", "Moderate", " ", "A lot"),
                      breaks = 1:5, limits = c(1,5))+
@@ -32,9 +33,10 @@ plot1<-data %>% ggplot(aes(GenConBlf, VacIntMMR))+
                      name = "Message Type", 
                      breaks =  c("Control", "Fact", "Narrative", "Hybrid"),
                      labels = c("No exposure", "Scientific Fact", "Narrative", "Hybrid"))+
+  
   theme_minimal()
 
-plot1
+
 ```
 
 #Let's look at each condition separately. I might create an animation at the end.
@@ -99,8 +101,8 @@ data %>%
 #Create Plot 2: This graph shows means of General Conspiracy Belief of each age group according to their self-identify political ideology.
 
 ```{r}
-data <- data %>% group_by(SlfPolIdeo, age) %>% 
-  mutate(avg_GenCon = mean(ï..GenConBlf, na.rm = TRUE)) %>% 
+data.plot2 <- data %>% group_by(SlfPolIdeo, age) %>% 
+  mutate(avg_GenCon = mean(GenConBlf, na.rm = TRUE)) %>% 
   ungroup()
 ```
 
@@ -127,6 +129,7 @@ data$PolIdeo <- data$PolIdeo %>% factor(c("Very conservative", "Conservative", "
 data$Edu <- data$Edu %>% 
   factor(c(levels = "High school degree or equivalent (e.g. GED)", "Some college, no degree", "Associate degree (e.g. AA, AS)", "Bachelor's degree (e.g. BA, BS)", "Master's degree (e.g., MA, MS, MEd)"))
 ```
+
 
 ```{r}
 data$Edu <- recode_factor(data$Edu, "High school degree or equivalent (e.g. GED)" = "High school degree", "Some college, no degree" = "Some College, no degree", "Associate degree (e.g. AA, AS)" = "Associate's degree", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's degree", "Master's degree (e.g., MA, MS, MEd)" = "Master's degree")

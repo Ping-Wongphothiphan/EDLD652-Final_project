@@ -1,21 +1,23 @@
-
+#Tab 1: For researcher
 
 ```{r}
 
 plot1.anim <- ggplot(data, aes(x = GenConBlf, y =VacIntMMR))+
-  geom_point(aes(color = Condition), alpha = .7, position = "jitter")+
+  geom_point(aes(color = Condition), alpha = .4, position = "jitter")+
   geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
   labs(x = "MMR vaccination intention",
        y = "Level of general conspiracy belief")+
   scale_x_continuous(labels = c("Definitely won't", 
-                                "Probably won't", 
+                                " ", 
                                 "Middle of the road", 
-                                "Probably will", 
+                                " ", 
                                 "Definitely will"), 
                      breaks = 1:5, limits = c(1,5))+
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle = 25, hjust = 1))+
-  scale_y_continuous(labels = c("None", " ", "Moderate", " ", "A lot"),
+  scale_y_continuous(labels = c("None", 
+                                " ", 
+                                "Moderate", 
+                                " ", 
+                                "A lot"),
                      breaks = 1:5, limits = c(1,5)) +
   transition_states(Condition,
                     transition_length = 2,
@@ -35,15 +37,214 @@ animate(plot1.anim, renderer = magick_renderer())
 ```
 
 
+#Tab 3: Demographic Variables
+
+#Plot 3
+
 ```{r}
-data %>% filter(Gender == c("Female", "Male")) %>% 
-  ggplot(aes(GenConBlf)) +
+data_plot3 <- data %>% 
+  select(GenConBlf, VacConBlf, Edu, PolIdeo) %>% 
+  pivot_longer(!c(Edu, PolIdeo),
+               names_to = "ConBlfTypes",
+               values_to = "score") %>%
+  filter(!Edu %in% c("Less than a high school diploma", "Doctorate (e.g. PhD, EdD)")) %>% 
+  drop_na(c(Edu, PolIdeo)) %>% 
+  mutate(Edu = recode(Edu, "High school degree or equivalent (e.g. GED)" = "High school degree", "Some college, no degree" = "Some College, no degree", "Associate degree (e.g. AA, AS)" = "Associate's degree", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's degree", "Master's degree (e.g., MA, MS, MEd)" = "Master's degree")) #%>%
+  
+  #factor(data_plot3$PolIdeo, levels = c("Very conservative", "Conservative", "Neither liberal nor conservative", "Liberal", "Very liberal")) %>% 
+  #factor(data_plot3$Edu, c(levels = "High school degree or equivalent (e.g. GED)", "Some college, no degree", "Associate degree (e.g. AA, AS)", "Bachelor's degree (e.g. BA, BS)", "Master's degree (e.g., MA, MS, MEd)"))
+```
+
+```{r}
+plot3.anim <-
+  ggplot(data_plot3, aes(x = Edu, y = score))+
+  geom_col(aes(fill = PolIdeo), position = "dodge") +
+  transition_states(ConBlfTypes,
+                  transition_length = 1,
+                  state_length = 2)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.65))
+        
+      
+animate(plot3.anim, renderer = magick_renderer())
+```
+
+
+
+```{r}
+plot3.anim <- data_plot3 %>% 
+  filter (Edu != "NA") %>% 
+  ggplot(aes(x = PolIdeo, y = Edu))+
+  geom_tile(aes(fill = score), color = "white")+
+  scale_fill_viridis_c(option = "magma")+
+  labs(title = "Conspiracy belief in general of participants across political ideology and education",
+       x = "Political ideology",
+       y = "Degree of education",
+       fill = "General\nconspiracy\nbelief level")+
+  transition_states(ConBlfTypes,
+                  transition_length = 1,
+                  state_length = 2)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.65))
+        
+      
+animate(plot3.anim, renderer = magick_renderer())
+```
+
+```{r}
+plot(plot3.anim)
+```
+
+
+#Plot 4: by Gender
+
+```{r}
+dat.plot4.longer <- data %>% 
+  select(GenConBlf, VacConBlf, Gender) %>% 
+  filter(Gender == c("Female", "Male")) %>% 
+  pivot_longer(!Gender, 
+               names_to = "ConBlfTypes",
+               values_to = "score")
+```
+
+```{r}
+plot4_anim <- 
+  dat.plot4.longer %>% 
+  ggplot(aes(score)) +
   geom_density(aes(fill = Gender), color = "white", alpha = .3)+
-  labs(title = "Males vs Females: Who has higher general conspiracy belief?",
+  labs(title = "Males vs Females: Who has higher general conspiracy belief?", #fix the tile & make ggtitle
        x = "Level of general conspiracy belief",
-       y = "Density")+
+       y = "Density")+ #fix the label along the x-axis, too.
+  transition_states(ConBlfTypes,
+                  transition_length = 1,
+                  state_length = 2)+
   theme_minimal()+
   theme(plot.title = element_text(hjust = 0.5))
 
+
+animate(plot4_anim, renderer = magick_renderer())
+```
+
+
+
+#Plot 5: By race
+
+#Static
+```{r}
+data %>% 
+  select(GenConBlf, VacConBlf, Race) %>% 
+  #group_by(Race) %>% 
+  #mutate(avg_GenConBlf = mean(GenConBlf)) %>% 
+  #mutate(avg_VacConBlf = mean(VacConBlf)) %>% 
+  #ungroup() %>% 
+  #select(Race, avg_GenConBlf, avg_VacConBlf) %>% 
+  pivot_longer(!c(Race), 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  filter(!Race %in% c("NA", "Native Hawaiian or Pacific Islander", "Other:", "Two or more")) %>% 
+  drop_na(Race) %>% 
+  ggplot(aes(score)) +
+  geom_density(aes(fill = Race), color = "white", alpha = .3)
+```
+
+```{r}
+plot5_anim <- data %>% 
+  select(GenConBlf, VacConBlf, Race) %>% 
+  pivot_longer(!c(Race), 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  filter(!Race %in% c("NA", "Native Hawaiian or Pacific Islander", "Other:", "Two or more")) %>% 
+  drop_na(Race) %>% 
+  ggplot(aes(score)) +
+  geom_density(aes(fill = Race), color = "white", alpha = .3)+
+  labs(title = "Who has higher level of conspiracy beliefs?", #fix the tile & make ggtitle
+       x = "Level of general conspiracy belief",
+       y = "Density")+ #fix the label along the x-axis, too.
+  transition_states(ConBlfTypes,
+                  transition_length = 1,
+                  state_length = 2)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+animate(plot5_anim, renderer = magick_renderer())
+
+```
+
+```{r}
+plot5_anim <- data %>% 
+  select(GenConBlf, VacConBlf, Race) %>% 
+  pivot_longer(!c(Race), 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  filter(!Race %in% c("NA", "Native Hawaiian or Pacific Islander", "Other:", "Two or more")) %>% 
+  drop_na(Race) %>% 
+  mutate(Race = recode(Race, "American Indian or Alaska Native" = "Native Americans", "Black or African American" = "Black", "Caucasian or White" = "White", "Asian" = "Asian")) %>% 
+  ggplot(aes(score)) +
+  geom_density(aes(fill = Race), color = "white", alpha = .4)+
+  labs(title = "Who has higher level of conspiracy beliefs?", #fix the tile & make ggtitle
+       x = "Level of general conspiracy belief",
+       y = "Density")+ #fix the label along the x-axis, too.
+  transition_states(ConBlfTypes,
+                  transition_length = 1,
+                  state_length = 2)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+animate(plot5_anim, renderer = magick_renderer())
+```
+
+
+# Plot 6: by Political Party & age group.
+
+```{r}
+plot6.anim <- data %>% group_by(SlfPolIdeo, age) %>% 
+  mutate(avg_GenConBlf = mean(GenConBlf, na.rm = TRUE)) %>% 
+  mutate(avg_VacConBlf = mean(VacConBlf, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  drop_na(c(SlfPolIdeo, age)) %>% 
+  select(SlfPolIdeo, age, avg_GenConBlf, avg_VacConBlf) %>% 
+  pivot_longer(!c(SlfPolIdeo, age), 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  filter(SlfPolIdeo != "Other:") %>% 
+  filter(age != "18-20 years old") %>% 
+  ggplot(aes(age, score))+
+  geom_col(aes(fill = SlfPolIdeo), position = "dodge")+
+  labs(title = "Conspiracy belief in general of participants across age and political party", #change to ggtitle
+       x = "Age groups",
+       y = "Average conspiracy belief in general")+
+  scale_fill_manual(values = c("blue1", "darkmagenta", "firebrick2"),
+                     name = "Self-identified \npolitical party", 
+                     breaks =  c("Democrats", "Independents", "Republicans"),
+                     labels = c("Democrats", "Independents", "Republicans"))+
+  transition_states(ConBlfTypes,
+                  transition_length = 1,
+                  state_length = 2)+
+  theme_minimal()
+
+animate(plot6.anim, renderer = magick_renderer())
+```
+
+# Plot 7: By Income
+```{r}
+dat_plot7 <- data %>% 
+  select(GenConBlf, VacConBlf, Income) %>% 
+  group_by(Income) %>% 
+  mutate(avg_GenConBlf = mean(GenConBlf, na.rm = TRUE)) %>% 
+  mutate(avg_VacConBlf = mean(VacConBlf, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  drop_na(Income) %>% 
+  select(Income, avg_GenConBlf, avg_VacConBlf) %>% 
+  pivot_longer(!c(Income), 
+               names_to = "ConBlfTypes",
+               values_to = "score") 
+```
+
+
+```{r}
+dat_plot7 %>% ggplot(score, Income) + 
+  geom_point(aes(color = ConBlfTypes))
 ```
 

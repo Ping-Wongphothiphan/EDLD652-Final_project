@@ -1,36 +1,253 @@
 ---
-title: "Conspiracy Beliefs & MMR Vaccination among US parents"
+title: "Conspiracy Beliefs & Childhood Vaccination among US Parents"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
+    social: menu
+    source_code: https://ping-wongphothiphan.github.io/EDLD652-Final_project/
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+library(tidyverse)
+library(gghighlight)
+library(here)
+library(gganimate)
+library(magick)
+
+data <- read_csv(here("data.csv"))
 ```
 
-Column {data-width=650}
+For Researchers
+=======================================
+
+Sidebar Title {.sidebar}
+-----------------------------------------------------------------------
+Background:
+
+This data is an experimental study aiming to learn that which message formats is more effective in convincing parents with conspiracy beliefs. \n
+Participants were randomly assigned into one of four message formats providing: \n
+1) Only scientific information (Scientific fact)\n
+2) A narrative of a mother who successfully vaccinate her child (Narrative)\n
+3) Scientific fact integrated with a narrative story of a mother (Hybrid)\n
+4) No exposure
+
+
+Column {.tabset}
 -----------------------------------------------------------------------
 
-### Chart A
+### Animated plot for MMR vaccination Intention in each condition
 
 ```{r}
+plot1.anim <- ggplot(data, aes(x = GenConBlf, y =VacIntMMR))+
+  geom_point(aes(color = Condition), alpha = .4, position = "jitter")+
+  geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
+  labs(x = "MMR vaccination intention",
+       y = "Level of general conspiracy belief")+
+  scale_x_continuous(labels = c("Definitely won't", 
+                                " ", 
+                                "Maybe, Maybe not", 
+                                " ", 
+                                "Definitely will"), 
+                     breaks = 1:5, limits = c(1,5))+
+  scale_color_manual(values = c("orchid", "salmon", "darkturquoise", "chartreuse3"),
+                     name = "Message Type", 
+                     breaks =  c("Control", "Fact", "Narrative", "Hybrid"),
+                     labels = c("No exposure", "Scientific Fact", "Narrative", "Hybrid"))+
+  scale_y_continuous(labels = c("None", " ", "Moderate", " ", "A lot"),
+                     breaks = 1:5, limits = c(1,5)) +
+  transition_states(Condition,
+                    transition_length = 2,
+                    state_length = 2) +
+  enter_fade() +
+  enter_grow() +
+  exit_fade() +
+  exit_shrink() +
+  ease_aes() +
+  ggtitle("Do parents with Conspiracy beliefs intend to vaccinate their children against Measles?",
+          subtitle = "Intention after reading {closest_state} message format")+
+  theme_minimal()
 
+
+animate(plot1.anim, renderer = magick_renderer())
 ```
 
-Column {data-width=350}
+### Parents' intention across different message formats
+
+```{r}
+data %>% ggplot(aes(GenConBlf, VacIntMMR))+
+  geom_point(aes(color = Condition), alpha = .4, position = "jitter")+
+  geom_smooth(aes(color = Condition), method = "lm", se = FALSE)+
+  labs(title = "Do parents with conspiracy beliefs intend to vaccinate their child?",
+       subtitle = "An experiment of different message types",
+       x = "MMR vaccination intention",
+       y = "Level of general conspiracy belief")+
+  scale_x_continuous(labels = c("Definitely won't", " ", "Maybe, Maybe not", " ", "Definitely will"), 
+                     breaks = 1:5, limits = c(1,5))+
+  scale_y_continuous(labels = c("None", " ", "Moderate", " ", "A lot"),
+                     breaks = 1:5, limits = c(1,5))+
+  scale_color_manual(values = c("orchid", "salmon", "darkturquoise", "chartreuse3"),
+                     name = "Message Type", 
+                     breaks =  c("Control", "Fact", "Narrative", "Hybrid"),
+                     labels = c("No exposure", "Scientific Fact", "Narrative", "Hybrid"))+
+  theme_minimal()
+```
+
+For General Audience 
+==================================================================
+
+Sidebar Title {.sidebar}
 -----------------------------------------------------------------------
 
-### Chart B
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+### Hesitancy
+
+
+
+
+Who is more hesitant in vaccination? {.storyboard}
+===================================================================
+
+### By age and preferred political parties
 
 ```{r}
+plot6.anim <- data %>% group_by(SlfPolIdeo, age) %>% 
+  mutate(avg_GenConBlf = mean(GenConBlf, na.rm = TRUE)) %>% 
+  mutate(avg_VacConBlf = mean(VacConBlf, na.rm = TRUE)) %>%
+  ungroup() %>% 
+  drop_na(c(SlfPolIdeo, age)) %>% 
+  select(SlfPolIdeo, age, avg_GenConBlf, avg_VacConBlf) %>% 
+  pivot_longer(!c(SlfPolIdeo, age), 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  filter(SlfPolIdeo != "Other:") %>% 
+  filter(age != "18-20 years old") %>% 
+  ggplot(aes(age, score))+
+  geom_col(aes(fill = SlfPolIdeo), position = "dodge")+
+  labs(title = "Conspiracy belief in general of participants across age and political party", #change to ggtitle
+       x = "Age groups",
+       y = "Average conspiracy belief in general")+
+  scale_fill_manual(values = c("blue1", "darkmagenta", "firebrick2"),
+                     name = "Self-identified \npolitical party", 
+                     breaks =  c("Democrats", "Independents", "Republicans"),
+                     labels = c("Democrats", "Independents", "Republicans"))+
+  transition_states(ConBlfTypes,
+                  transition_length = 2,
+                  state_length = 2)+
+  theme_minimal()
+
+animate(plot6.anim, renderer = magick_renderer())
+```
+
+
+### By gender
+
+```{r}
+plot4_anim <- data %>% 
+  select(GenConBlf, VacConBlf, Gender) %>% 
+  filter(Gender == c("Female", "Male")) %>% 
+  pivot_longer(!Gender, 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  ggplot(aes(score)) +
+  geom_density(aes(fill = Gender), color = "white", alpha = .3)+
+  labs(title = "Males vs Females: Who has higher general conspiracy belief?",
+       x = "Level of general conspiracy belief",
+       y = "Density")+
+  transition_states(ConBlfTypes,
+                  transition_length = 2,
+                  state_length = 2)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+animate(plot4_anim, renderer = magick_renderer())
+```
+### By income
+
+```{r}
+dat_plot7 <- data %>% 
+  select(GenConBlf, VacConBlf, Income) %>% 
+  drop_na(Income) %>% 
+  pivot_longer(c(VacConBlf, GenConBlf), 
+               names_to = "ConBlfTypes",
+               values_to = "score")
+
+dat_plot7$Income <- factor(dat_plot7$Income, levels = c("Less than $10,000", "$10,000 - $19,999", "$20,000 - $29,999", "$30,000 - $39,999", "$40,000 - $49,999", "$50,000 - $59,999", "$60,000 - $69,999", "$70,000 - $79,999", "$80,000 - $89,999", "$90,000 - $99,999", "$100,000 - $149,999", "More than $150,000", ordered = TRUE))
+
+plot7_anim <- 
+  dat_plot7 %>% 
+  ggplot(aes(score, Income))+
+  geom_boxplot(position = "dodge")+
+  geom_jitter(aes(color = Income), position = position_jitter(0.2), show.legend = FALSE)+
+  transition_states(ConBlfTypes,
+                  transition_length = 2,
+                  state_length = 2)+
+  theme_minimal()
+
+animate(plot7_anim, renderer = magick_renderer())
+```
+
+
+### By race
+
+```{r}
+plot5_anim <- data %>% 
+  select(GenConBlf, VacConBlf, Race) %>% 
+  pivot_longer(!c(Race), 
+               names_to = "ConBlfTypes",
+               values_to = "score") %>% 
+  filter(!Race %in% c("NA", "Native Hawaiian or Pacific Islander", "Other:", "Two or more")) %>% 
+  drop_na(Race) %>% 
+  mutate(Race = recode(Race, "American Indian or Alaska Native" = "Native Americans", "Black or African American" = "Black", "Caucasian or White" = "White", "Asian" = "Asian")) %>% 
+  ggplot(aes(score)) +
+  geom_density(aes(fill = Race), color = "white", alpha = .4)+
+  labs(title = "Who has higher level of conspiracy beliefs?", #fix the tile & make ggtitle
+       x = "Level of general conspiracy belief",
+       y = "Density")+ #fix the label along the x-axis, too.
+  transition_states(ConBlfTypes,
+                  transition_length = 2,
+                  state_length = 2)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+animate(plot5_anim, renderer = magick_renderer())
 
 ```
 
-### Chart C
+
+### By Education
 
 ```{r}
+data_plot3 <- data %>% 
+  select(GenConBlf, VacConBlf, Edu, PolIdeo) %>% 
+  pivot_longer(!c(Edu, PolIdeo),
+               names_to = "ConBlfTypes",
+               values_to = "score") %>%
+  filter(!Edu %in% c("Less than a high school diploma", "Professional degree (e.g., MD, DDS, DVM)")) %>% 
+  drop_na(c(Edu, PolIdeo)) %>% 
+  mutate(Edu = recode(Edu, "High school degree or equivalent (e.g. GED)" = "High school degree", "Some college, no degree" = "Some College, no degree", "Associate degree (e.g. AA, AS)" = "Associate's degree", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's degree", "Master's degree (e.g., MA, MS, MEd)" = "Master's or Doctoral degree","Doctorate (e.g. PhD, EdD)" = "Master's or Doctoral degree")) 
+ 
+data_plot3$Edu <- factor(data_plot3$Edu, levels = c("High school degree", "Some College, no degree", "Associate's degree", "Bachelor's degree", "Master's or Doctoral degree"))
 
+plot3.anim <-
+  ggplot(data_plot3, aes(x = score, y = Edu))+
+  geom_boxplot(position = "dodge")+
+  geom_jitter(aes(color = Edu), position = position_jitter(0.2), show.legend = FALSE)+
+  transition_states(ConBlfTypes,
+                  transition_length = 2,
+                  state_length = 1)+
+  scale_color_viridis_d(option = "plasma")+
+  theme_minimal()
+        
+      
+animate(plot3.anim, renderer = magick_renderer())
 ```
+
+
 
