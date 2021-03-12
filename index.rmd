@@ -168,6 +168,7 @@ plot4_anim <- data %>%
 animate(plot4_anim, renderer = magick_renderer())
 ```
 
+
 ### By income
 
 ```{r}
