@@ -113,7 +113,7 @@ plot1.anim <- ggplot(data, aes(x = GenConBlf, y =VacIntMMR))+
 animate(plot1.anim, renderer = magick_renderer())
 ```
 
-### Animated plot for **risk perception of MMR vaccinae** of each message format
+### Animated plot for **risk perception of MMR vaccine** of each message format
 
 ```{r}
 plot1_rsk.anim <- ggplot(data, aes(x = GenConBlf, y = RskMmrVac))+
