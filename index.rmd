@@ -207,7 +207,7 @@ ggplot(data, aes(x = GenConBlf, y = RskMmrVac))+
 Demographic Information: Conspiracy Beliefs in General vs in Vaccination {.storyboard}
 ===================================================================
 
-### Grouped by **age and preferred political parties** {data-commentary-width=600}
+### Grouped by **age and preferred political parties** {data-commentary-width=500}
 
 ```{r}
 plot6.anim <- data %>% group_by(SlfPolIdeo, age) %>% 
@@ -219,8 +219,7 @@ plot6.anim <- data %>% group_by(SlfPolIdeo, age) %>%
   pivot_longer(!c(SlfPolIdeo, age), 
                names_to = "ConBlfTypes",
                values_to = "score") %>%
-  mutate(ConBlfTypes = recode(ConBlfTypes, "avg_GenConBlf" = "GENERAL", "avg_VacConBlf" = "VACCINATION")) %>% 
-  filter(SlfPolIdeo != "Other:") %>% 
+  mutate(ConBlfTypes = recode(ConBlfTypes, "avg_GenConBlf" = "GENERAL", "avg_VacConBlf" = "VACCINATION")) %>%   filter(SlfPolIdeo != "Other:") %>% 
   filter(age != "18-20 years old") %>% 
   filter(age != "51-60 years old") %>% 
   ggplot(aes(age, score))+
@@ -228,12 +227,6 @@ plot6.anim <- data %>% group_by(SlfPolIdeo, age) %>%
   labs(title = "Do age and supported political party influence on \nconspiracy beliefs in {closest_state}?",
        x = "Age groups",
        y = "Average conspiracy belief in general")+
-  scale_y_continuous(labels = c("None", 
-                                " ", 
-                                "Moderate", 
-                                " ", 
-                                "A lot"), 
-                     breaks = 1:5, limits = c(1,5))+
   scale_fill_manual(values = c("blue1", "darkmagenta", "firebrick2"),
                      name = "Self-identified \npolitical party", 
                      breaks =  c("Democrats", "Independents", "Republicans"),
@@ -281,7 +274,7 @@ data %>% group_by(SlfPolIdeo, age) %>%
 ```
 
 
-### By gender {data-commentary-width=600}
+### Grouped by **gender** {data-commentary-width=500}
 
 ```{r}
 plot4_anim <- data %>% 
@@ -293,7 +286,7 @@ plot4_anim <- data %>%
   mutate(ConBlfTypes = recode(ConBlfTypes, "GenConBlf" = "GENERAL", "VacConBlf" = "VACCINATION")) %>% 
   ggplot(aes(score)) +
   geom_density(aes(fill = Gender), color = "white", alpha = .3)+
-  labs(title = "Males vs Females",
+  labs(title = "Males vs Females:",
        subtitle = "Who has higher conspiracy belief in {closest_state}?",
        x = "Level of general conspiracy belief",
        y = "Density")+
@@ -331,7 +324,7 @@ data %>%
 ```
 
 
-### By income {data-commentary-width=600}
+### Grouped by **income** {data-commentary-width=500}
 
 ```{r}
 dat_plot7 <- data %>% 
@@ -369,13 +362,13 @@ animate(plot7_anim, renderer = magick_renderer())
 *************
 The initial versions of this animated plot are shown below. 
 
-The differences between these two version are:
+The differences between these two versions are:
 
-1) I factor the order of levels of "income" variable so that it is organized from low to high.
+1) I factored the order of levels of "income" variable so that it is organized from low to high.
 
-2) I added geom_jitter() in addition to geom_boxplot to visualize the density of data in each level and categorized them by colors.
+2) I added geom_jitter(), besides using geom_boxplot() alone, to visualize the density of data in each level and categorized them by colors.
 
-3) I merged the two plots by animiation function to visualize the differences of conspiracy beliefs in general vs conspiracy beliefs in vaccination across groups of income.
+3) I merged the two plots by gganimate() function to visualize the differences of conspiracy beliefs in general vs conspiracy beliefs in vaccination across groups of income.
 
 
 ```{r}
@@ -398,7 +391,7 @@ data %>%
   theme_minimal()
 ```
 
-### By race {data-commentary-width=400}
+### Grouped by **race** {data-commentary-width=500}
 
 ```{r}
 plot5_anim <- data %>% 
@@ -412,7 +405,7 @@ plot5_anim <- data %>%
   mutate(Race = recode(Race, "American Indian or Alaska Native" = "Native Americans", "Black or African American" = "Black", "Caucasian or White" = "White", "Asian" = "Asian")) %>% 
   ggplot(aes(score)) +
   geom_density(aes(fill = Race), color = "white", alpha = .4)+
-  labs(title = "Which race has higher level of conspiracy beliefs in {closest_state}?", 
+  labs(title = "Which race holds more conspiracy beliefs in {closest_state}?", 
        x = "Level of general conspiracy belief",
        y = "Density")+ 
   scale_x_continuous(labels = c("None", 
@@ -425,7 +418,7 @@ plot5_anim <- data %>%
                   transition_length = 2,
                   state_length = 2)+
   theme_minimal()+
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0))
 
 
 animate(plot5_anim, renderer = magick_renderer())
@@ -459,28 +452,30 @@ data %>%
 
 
 
-### By Education {data-commentary-width=400}
+### Grouped by **education** {data-commentary-width=500}
 
 ```{r}
 data_plot3 <- data %>% 
-  select(GenConBlf, VacConBlf, Edu, PolIdeo) %>% 
-  pivot_longer(!c(Edu, PolIdeo),
+  select(GenConBlf, VacConBlf, Edu) %>% 
+  pivot_longer(!c(Edu),
                names_to = "ConBlfTypes",
                values_to = "score") %>%
   filter(!Edu %in% c("Less than a high school diploma", "Professional degree (e.g., MD, DDS, DVM)")) %>% 
-  drop_na(c(Edu, PolIdeo)) %>% 
+  drop_na(Edu) %>% 
   mutate(ConBlfTypes = recode(ConBlfTypes, "GenConBlf" = "GENERAL", "VacConBlf" = "VACCINATION")) %>%
-  mutate(Edu = recode(Edu, "High school degree or equivalent (e.g. GED)" = "High school degree", "Some college, no degree" = "Some College, no degree", "Associate degree (e.g. AA, AS)" = "Associate's degree", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's degree", "Master's degree (e.g., MA, MS, MEd)" = "Master's or Doctoral degree","Doctorate (e.g. PhD, EdD)" = "Master's or Doctoral degree")) 
+  mutate(Edu = recode(Edu, "High school degree or equivalent (e.g. GED)" = "High school", "Some college, no degree" = "Some College", "Associate degree (e.g. AA, AS)" = "Associate's", "Bachelor's degree (e.g. BA, BS)" = "Bachelor's", "Master's degree (e.g., MA, MS, MEd)" = "Master's or Doctorate","Doctorate (e.g. PhD, EdD)" = "Master's or Doctorate")) 
+
  
-data_plot3$Edu <- factor(data_plot3$Edu, levels = c("High school degree", "Some College, no degree", "Associate's degree", "Bachelor's degree", "Master's or Doctoral degree"))
+data_plot3$Edu <- factor(data_plot3$Edu, levels = c("High school", "Some College", "Associate's", "Bachelor's", "Master's or Doctorate"))
 
 plot3.anim <-
   ggplot(data_plot3, aes(x = score, y = Edu))+
   geom_boxplot(position = "dodge")+
   geom_jitter(aes(color = Edu), position = position_jitter(0.2), show.legend = FALSE)+
-  labs(title = "Does education matters for individual conspiracy beliefs?",
+  labs(title = "Does education influence conspiracy beliefs?",
        subtitle = "Showing conspiracy beliefs in {closest_state}",
-       x = "Level of conspiracy beliefs")+
+       x = "Level of conspiracy beliefs",
+       y = "Education")+
   scale_x_continuous(labels = c("None", 
                                 " ", 
                                 "Moderate", 
@@ -498,5 +493,37 @@ animate(plot3.anim, renderer = magick_renderer())
 ```
 
 *************
-This animated bar chart shows
+The initial versions of this animated plot are shown below.
+
+The differences between these two versions include:
+
+1) I added geom_jitter(), in addition to geom_boxplot(), to visualize the density of data in each level and categorized them by colors.
+2) I factored the order of levels of “income” variable so that it is organized from low to high.
+3) I merged the two plots by gganimate() function to visualize the differences of conspiracy beliefs in general vs conspiracy beliefs in vaccination across groups of Education.
+
+
+```{r}
+data %>% 
+  select(GenConBlf, VacConBlf, Edu) %>% 
+  filter(!Edu %in% c("Less than a high school diploma", "Professional degree (e.g., MD, DDS, DVM)")) %>% 
+  drop_na(Edu) %>% 
+  ggplot(aes(GenConBlf, Edu))+
+  geom_boxplot(aes(fill = Edu), position = "dodge")+
+  scale_fill_viridis_d(option = "plasma")+
+  theme_minimal()+
+  theme(legend.position= "none")
+```
+
+
+```{r}
+data %>% 
+  select(GenConBlf, VacConBlf, Edu) %>% 
+  filter(!Edu %in% c("Less than a high school diploma", "Professional degree (e.g., MD, DDS, DVM)")) %>% 
+  drop_na(Edu) %>% 
+  ggplot(aes(VacConBlf, Edu))+
+  geom_boxplot(aes(fill = Edu), position = "dodge")+
+  scale_fill_viridis_d(option = "plasma")+
+  theme_minimal()+
+  theme(legend.position= "none")
+```
 
